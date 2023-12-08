@@ -23,18 +23,30 @@ const SavedBooks = () => {
       return false;
     }
 
+    // try {
+    //   const { data } = await removeBookMutation({
+    //     variables: { bookId: bookId },
+    //   });
+
+    //   // Update the local state with the updated user data
+    //   // Assuming setUserData is a function to update user data, make sure it's defined
+    //   if (setUserData) {
+    //     setUserData(data.removeBook);
+    //   }
+
+    //   // Upon success, remove the book's id from localStorage
+    //   removeBookId(bookId);
+    // } catch (err) {
+    //   console.error(err);
+    // }
+
     try {
-      const { data } = await removeBookMutation({
-        variables: { bookId: bookId },
+      await removeBook({
+        variables: {
+          bookId,
+        },
       });
 
-      // Update the local state with the updated user data
-      // Assuming setUserData is a function to update user data, make sure it's defined
-      if (setUserData) {
-        setUserData(data.removeBook);
-      }
-
-      // Upon success, remove the book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
       console.error(err);

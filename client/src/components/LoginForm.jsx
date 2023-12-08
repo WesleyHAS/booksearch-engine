@@ -30,8 +30,9 @@ const LoginForm = () => {
         variables: { ...userFormData },
       });
 
-      const { token } = data;
-      Auth.login(token);
+      // const { token } = data;
+
+      Auth.login(data.login.token);
     } catch (err) {
       console.error(err);
       setShowAlert(true);
