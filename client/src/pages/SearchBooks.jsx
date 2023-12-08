@@ -19,31 +19,29 @@ const SearchBooks = () => {
   // create state to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
 
-  // const [saveBook, { error }] = useMutation(SAVE_BOOK, {
-  //   // The below block ensures that as soon as the user saves a book, it appears right away in the saved books page
-  //   update(cache, { data: { saveBook } }) {
-  //     try {
-  //       const { me } = cache.readQuery({
-  //         query: GET_ME,
-  //       });
+  const [saveBook, { error }] = useMutation(SAVE_BOOK, {
+    // The below block ensures that as soon as the user saves a book, it appears right away in the saved books page
+    update(cache, { data: { saveBook } }) {
+      try {
+        const { me } = cache.readQuery({
+          query: GET_ME,
+        });
 
-  //       cache.writeQuery({
-  //         query: GET_ME,
-  //         data: {
-  //           me: {
-  //             ...me,
-  //             savedBooks: [
-  //               ...me.savedBooks,
-  //               saveBook.savedBooks[saveBook.savedBooks.length - 1],
-  //             ],
-  //           },
-  //         },
-  //       });
-  //     } catch (e) {}
-  //   },
-  // });
-
-  const [saveBook, { error }] = useMutation(SAVE_BOOK);
+        cache.writeQuery({
+          query: GET_ME,
+          data: {
+            me: {
+              ...me,
+              savedBooks: [
+                ...me.savedBooks,
+                saveBook.savedBooks[saveBook.savedBooks.length - 1],
+              ],
+            },
+          },
+        });
+      } catch (e) {}
+    },
+  });
 
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
@@ -82,34 +80,6 @@ const SearchBooks = () => {
     }
   };
 
-  // // create function to handle saving a book to our database
-  // const handleSaveBook = async (bookId) => {
-  //   // find the book in `searchedBooks` state by the matching id
-  //   const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
-
-  //   // get tokens
-  //   const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-  //   // console.log(token);
-  //   if (!token) {
-  //     return false;
-  //   }
-
-  //   try {
-  //     await saveBook({
-  //       variables: { input: { ...bookToSave } },
-  //     });
-
-  //     // if book successfully saves to user's account, save book id to state
-  //     setSavedBookIds([...savedBookIds, bookToSave.bookId]);
-  //     // saveBookIds(savedBookIds);
-  //   } catch (err) {
-  //     // console.log(error.networkError.result.errors);
-
-  //     console.error(err);
-  //   }
-  // };
-
   // create function to handle saving a book to our database
   const handleSaveBook = async (bookId) => {
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
@@ -125,6 +95,7 @@ const SearchBooks = () => {
       console.log(bookToSave);
       setSavedBookIds([...savedBookIds, bookToSave.bookId]); //saved in localstorage
     } catch (err) {
+      console.log(bookToSave);
       console.error(err);
     }
   };

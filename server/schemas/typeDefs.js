@@ -32,6 +32,7 @@ const typeDefs = `
     _id: ID
     username: String
     email: String
+    password: String
     bookCount: Int
     savedBooks: [Book]
   }
