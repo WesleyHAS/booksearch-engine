@@ -1,53 +1,23 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Container, Col, Form, Button, Card, Row } from "react-bootstrap";
 
 import Auth from "../utils/auth";
-import { searchGoogleBooks } from "../utils/API";
 import { saveBookIds, getSavedBookIds } from "../utils/localStorage";
 
 import { useMutation } from "@apollo/client";
 import { SAVE_BOOK } from "../utils/mutations";
 
-import { GET_ME } from "../utils/queries";
-
 const SearchBooks = () => {
-  // create state for holding returned google api data
   const [searchedBooks, setSearchedBooks] = useState([]);
-  // create state for holding our search field data
   const [searchInput, setSearchInput] = useState("");
 
-  // create state to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
-
-  const [saveBook, { error }] = useMutation(SAVE_BOOK, {
-    // The below block ensures that as soon as the user saves a book, it appears right away in the saved books page
-    update(cache, { data: { saveBook } }) {
-      try {
-        const { me } = cache.readQuery({
-          query: GET_ME,
-        });
-
-        cache.writeQuery({
-          query: GET_ME,
-          data: {
-            me: {
-              ...me,
-              savedBooks: [
-                ...me.savedBooks,
-                saveBook.savedBooks[saveBook.savedBooks.length - 1],
-              ],
-            },
-          },
-        });
-      } catch (e) {}
-    },
-  });
+  const [saveBook] = useMutation(SAVE_BOOK);
 
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
   });
 
-  // create method to search for books and set state on form submit
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
@@ -56,17 +26,18 @@ const SearchBooks = () => {
     }
 
     try {
-      const response = await searchGoogleBooks(searchInput);
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=${searchInput}`
+      );
 
       if (!response.ok) {
-        throw new Error("something went wrong!");
+        throw new Error(`Failed to fetch books. Status: ${response.status}`);
       }
 
       const { items } = await response.json();
 
       const bookData = items.map((book) => ({
         bookId: book.id,
-        link: book.volumeInfo.previewLink,
         authors: book.volumeInfo.authors || ["No author to display"],
         title: book.volumeInfo.title,
         description: book.volumeInfo.description,
@@ -76,27 +47,26 @@ const SearchBooks = () => {
       setSearchedBooks(bookData);
       setSearchInput("");
     } catch (err) {
-      console.error(err);
+      console.error(`Failed to fetch books. Error: ${err.message}`);
     }
   };
 
-  // create function to handle saving a book to our database
   const handleSaveBook = async (bookId) => {
     const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
+
     const token = Auth.loggedIn() ? Auth.getToken() : null;
-    console.log("this is the token ", token, Auth.loggedIn());
+
     if (!token) {
       return false;
     }
 
     try {
-      await saveBook({ variables: { input: bookToSave } });
-
-      console.log(bookToSave);
-      setSavedBookIds([...savedBookIds, bookToSave.bookId]); //saved in localstorage
+      await saveBook({
+        variables: { bookData: bookToSave },
+      });
+      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
     } catch (err) {
-      console.log(bookToSave);
-      console.error(err);
+      console.error(`Failed to save book. Error: ${err.message}`);
     }
   };
 
@@ -160,7 +130,7 @@ const SearchBooks = () => {
                         {savedBookIds?.some(
                           (savedBookId) => savedBookId === book.bookId
                         )
-                          ? "This book has already been saved!"
+                          ? "This book has been saved!"
                           : "Save this Book!"}
                       </Button>
                     )}
